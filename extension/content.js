@@ -40,8 +40,14 @@
       lastSelectedText = selectedText;
       return selectedText;
     }
-
     return lastSelectedText;
+  }
+
+  function splitModels(value) {
+    return value
+      .split(/[\n,，;；]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
   function renderList(container, items, emptyText) {
@@ -85,16 +91,107 @@
       const score = normalizeScore(rawScore);
       const row = document.createElement("div");
       row.className = "pdm-score-row";
-      row.innerHTML = `
-        <div class="pdm-score-head">
-          <span>${label}</span>
-          <strong>${score}/10</strong>
-        </div>
-        <div class="pdm-score-bar" aria-label="${label} ${score}/10">
-          <span style="width: ${score * 10}%"></span>
-        </div>
-      `;
+
+      const head = document.createElement("div");
+      head.className = "pdm-score-head";
+      const labelNode = document.createElement("span");
+      labelNode.textContent = label;
+      const scoreNode = document.createElement("strong");
+      scoreNode.textContent = `${score}/10`;
+      head.append(labelNode, scoreNode);
+
+      const bar = document.createElement("div");
+      bar.className = "pdm-score-bar";
+      bar.setAttribute("aria-label", `${label} ${score}/10`);
+      const fill = document.createElement("span");
+      fill.style.width = `${score * 10}%`;
+      bar.appendChild(fill);
+
+      row.append(head, bar);
       container.appendChild(row);
+    });
+  }
+
+  function renderTranslations(container, translations, recommendedId) {
+    container.innerHTML = "";
+    const safeTranslations = Array.isArray(translations) ? translations : [];
+    if (!safeTranslations.length) {
+      const empty = document.createElement("div");
+      empty.className = "pdm-muted";
+      empty.textContent = "暂未返回译文候选。";
+      container.appendChild(empty);
+      return;
+    }
+
+    safeTranslations.forEach((translation) => {
+      const card = document.createElement("div");
+      card.className = "pdm-result-card";
+      if (translation.id === recommendedId) {
+        card.classList.add("pdm-result-card-recommended");
+      }
+
+      const title = document.createElement("div");
+      title.className = "pdm-result-title";
+      title.textContent = `${translation.label || translation.id} · ${translation.model || "未知模型"}`;
+      if (translation.id === recommendedId) {
+        const badge = document.createElement("span");
+        badge.className = "pdm-badge";
+        badge.textContent = "推荐";
+        title.appendChild(badge);
+      }
+
+      const text = document.createElement("pre");
+      text.className = "pdm-sci";
+      text.textContent = translation.suggested_latex || "";
+
+      const summary = document.createElement("div");
+      summary.className = "pdm-muted";
+      summary.textContent = translation.summary || "";
+
+      card.append(title, text, summary);
+      container.appendChild(card);
+    });
+  }
+
+  function renderReviews(container, reviews) {
+    container.innerHTML = "";
+    const safeReviews = Array.isArray(reviews) ? reviews : [];
+    if (!safeReviews.length) {
+      const empty = document.createElement("div");
+      empty.className = "pdm-muted";
+      empty.textContent = "暂未返回评审结果。";
+      container.appendChild(empty);
+      return;
+    }
+
+    safeReviews.forEach((review) => {
+      const card = document.createElement("div");
+      card.className = "pdm-result-card";
+
+      const title = document.createElement("div");
+      title.className = "pdm-result-title";
+      title.textContent = `${review.label || review.id} · ${review.model || "未知模型"}`;
+
+      const recommended = document.createElement("div");
+      recommended.className = "pdm-muted";
+      recommended.textContent = `推荐：${review.recommended_translation_id || "未给出"}`;
+
+      const candidateList = document.createElement("div");
+      candidateList.className = "pdm-candidate-scores";
+      const candidateScores = Array.isArray(review.candidate_scores) ? review.candidate_scores : [];
+      candidateScores.forEach((score) => {
+        const item = document.createElement("div");
+        item.className = "pdm-candidate-score";
+        item.textContent = `${score.candidate_id || "候选"}：清晰度 ${score.clarity ?? 0}/10，学术语气 ${score.academic_tone ?? 0}/10，逻辑 ${score.logic ?? 0}/10，SCI 就绪度 ${score.sci_readiness ?? 0}/10。${score.comment || ""}`;
+        candidateList.appendChild(item);
+      });
+
+      const summary = document.createElement("div");
+      summary.className = "pdm-summary";
+      summary.textContent = review.summary || "该评审未返回总结。";
+
+      card.append(title, recommended, candidateList, summary);
+      container.appendChild(card);
     });
   }
 
@@ -120,18 +217,41 @@
       <div class="pdm-header">
         <div>
           <div class="pdm-title">论文翻译助手</div>
-          <div class="pdm-subtitle">中文论文转 SCI 英文</div>
+          <div class="pdm-subtitle">多模型 SCI 翻译与评审</div>
         </div>
         <button class="pdm-icon" type="button" data-action="close" title="关闭">x</button>
       </div>
       <div class="pdm-body">
+        <section class="pdm-card pdm-config">
+          <div class="pdm-section-title">协作模式</div>
+          <label class="pdm-field">
+            <span>模式</span>
+            <select class="pdm-select" data-field="mode">
+              <option value="single">单模型总揽</option>
+              <option value="dual_translate_review" selected>双译一评</option>
+              <option value="custom">自定义多译多评</option>
+            </select>
+          </label>
+          <label class="pdm-field">
+            <span>翻译模型，逗号或换行分隔</span>
+            <textarea class="pdm-model-input" data-field="translator-models" spellcheck="false">gpt-5.5, gpt-5.5</textarea>
+          </label>
+          <label class="pdm-field">
+            <span>评审模型，逗号或换行分隔</span>
+            <textarea class="pdm-model-input" data-field="reviewer-models" spellcheck="false">gpt-5.5</textarea>
+          </label>
+          <label class="pdm-field">
+            <span>最终汇总模型，可留空</span>
+            <input class="pdm-input" data-field="final-model" value="gpt-5.5" />
+          </label>
+        </section>
         <div class="pdm-actions">
-          <button class="pdm-primary" type="button" data-action="translate">翻译并评判</button>
-          <button class="pdm-secondary" type="button" data-action="copy">复制 SCI 英文</button>
+          <button class="pdm-primary" type="button" data-action="translate">运行多模型评审</button>
+          <button class="pdm-secondary" type="button" data-action="copy">复制推荐译文</button>
         </div>
         <button class="pdm-link" type="button" data-action="toggle-prompt">提示词设置</button>
         <section class="pdm-prompt" hidden>
-          <div class="pdm-section-title">可编辑提示词</div>
+          <div class="pdm-section-title">可编辑翻译提示词</div>
           <textarea class="pdm-prompt-input" spellcheck="false"></textarea>
           <div class="pdm-actions">
             <button class="pdm-secondary" type="button" data-action="save-prompt">保存提示词</button>
@@ -139,10 +259,31 @@
           </div>
           <div class="pdm-prompt-status"></div>
         </section>
-        <div class="pdm-status">请先在 Overleaf 编辑器中选中中文论文段落，然后点击“翻译并评判”。</div>
+        <div class="pdm-status">请先在 Overleaf 编辑器中选中中文论文段落，然后点击“运行多模型评审”。</div>
         <section class="pdm-card">
-          <div class="pdm-section-title">质量评分</div>
+          <div class="pdm-section-title">综合评分</div>
           <div class="pdm-scores"></div>
+        </section>
+        <section class="pdm-card">
+          <div class="pdm-section-title">推荐中英对照</div>
+          <div class="pdm-compare">
+            <div>
+              <div class="pdm-mini-title">原文</div>
+              <pre class="pdm-source"></pre>
+            </div>
+            <div>
+              <div class="pdm-mini-title">推荐 SCI 英文</div>
+              <pre class="pdm-recommended"></pre>
+            </div>
+          </div>
+        </section>
+        <section class="pdm-card">
+          <div class="pdm-section-title">译文候选</div>
+          <div class="pdm-translations"></div>
+        </section>
+        <section class="pdm-card">
+          <div class="pdm-section-title">评审意见</div>
+          <div class="pdm-reviews"></div>
         </section>
         <section class="pdm-card">
           <div class="pdm-section-title">原文问题</div>
@@ -151,23 +292,6 @@
         <section class="pdm-card">
           <div class="pdm-section-title">引用与证据判断</div>
           <div class="pdm-citations"></div>
-        </section>
-        <section class="pdm-card">
-          <div class="pdm-section-title">中英对照</div>
-          <div class="pdm-compare">
-            <div>
-              <div class="pdm-mini-title">原文</div>
-              <pre class="pdm-source"></pre>
-            </div>
-            <div>
-              <div class="pdm-mini-title">SCI 英文</div>
-              <pre class="pdm-sci"></pre>
-            </div>
-          </div>
-        </section>
-        <section class="pdm-card">
-          <div class="pdm-section-title">修改说明</div>
-          <div class="pdm-summary"></div>
         </section>
       </div>
     `;
@@ -185,11 +309,16 @@
     const promptStatus = panel.querySelector(".pdm-prompt-status");
     const status = panel.querySelector(".pdm-status");
     const scoresContainer = panel.querySelector(".pdm-scores");
+    const translationsContainer = panel.querySelector(".pdm-translations");
+    const reviewsContainer = panel.querySelector(".pdm-reviews");
     const issuesContainer = panel.querySelector(".pdm-issues");
     const citationsContainer = panel.querySelector(".pdm-citations");
     const sourceContainer = panel.querySelector(".pdm-source");
-    const sciContainer = panel.querySelector(".pdm-sci");
-    const summaryContainer = panel.querySelector(".pdm-summary");
+    const recommendedContainer = panel.querySelector(".pdm-recommended");
+    const modeInput = panel.querySelector('[data-field="mode"]');
+    const translatorModelsInput = panel.querySelector('[data-field="translator-models"]');
+    const reviewerModelsInput = panel.querySelector('[data-field="reviewer-models"]');
+    const finalModelInput = panel.querySelector('[data-field="final-model"]');
 
     closeButton.addEventListener("click", () => {
       panel.remove();
@@ -240,12 +369,12 @@
 
     copyButton.addEventListener("click", async () => {
       if (!latestSciEnglish) {
-        status.textContent = "还没有可复制的 SCI 英文结果。";
+        status.textContent = "还没有可复制的推荐译文。";
         return;
       }
       try {
         await navigator.clipboard.writeText(latestSciEnglish);
-        status.textContent = "SCI 英文译文已复制。";
+        status.textContent = "推荐译文已复制。";
       } catch (error) {
         status.textContent = `复制失败：${error.message}`;
       }
@@ -259,20 +388,29 @@
         return;
       }
 
-      status.textContent = "已读取选中文本，正在翻译、评分并判断引用需求...";
+      const workflow = {
+        mode: modeInput.value,
+        translator_models: splitModels(translatorModelsInput.value),
+        reviewer_models: splitModels(reviewerModelsInput.value),
+        final_model: finalModelInput.value.trim() || null,
+        use_final_recommendation: true
+      };
+
+      status.textContent = "已读取选中文本，正在运行多模型翻译与评审...";
       latestSciEnglish = "";
       renderScores(scoresContainer, {});
+      renderTranslations(translationsContainer, [], "");
+      renderReviews(reviewsContainer, []);
       renderList(issuesContainer, [], "正在分析原文问题...");
       renderList(citationsContainer, [], "正在判断引用与证据需求...");
       sourceContainer.textContent = selectedText;
-      sciContainer.textContent = "正在生成 SCI 英文译文...";
-      summaryContainer.textContent = "";
+      recommendedContainer.textContent = "正在等待评审推荐译文...";
 
       try {
         const response = await fetch(`${API_BASE}/debug`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ selected_text: selectedText })
+          body: JSON.stringify({ selected_text: selectedText, workflow })
         });
 
         if (!response.ok) {
@@ -283,21 +421,30 @@
         const data = await response.json();
         latestSciEnglish = data.suggested_latex || selectedText;
 
-        status.textContent = "翻译和评判结果已返回。";
+        status.textContent = "多模型翻译与评审结果已返回。";
         renderScores(scoresContainer, data.scores || {});
+        renderTranslations(translationsContainer, data.translations, data.recommended_translation_id);
+        renderReviews(reviewsContainer, data.reviews);
         renderList(issuesContainer, data.issues, "暂未返回原文问题。");
         renderList(citationsContainer, data.citation_assessment, "暂未返回引用判断。");
         sourceContainer.textContent = data.source_text || selectedText;
-        sciContainer.textContent = latestSciEnglish;
-        summaryContainer.textContent = data.summary || "暂未返回修改说明。";
+        recommendedContainer.textContent = latestSciEnglish;
       } catch (error) {
         status.textContent = "本地后端没有返回结果。";
-        sciContainer.textContent = [
-          "插件已经读取到选中文本，但本地后端没有成功返回翻译和评判。",
-          "",
-          "错误信息：",
-          error.message
-        ].join("\n");
+        recommendedContainer.textContent = "";
+        renderTranslations(translationsContainer, [
+          {
+            id: "error",
+            label: "错误",
+            model: "local backend",
+            suggested_latex: [
+              "插件已经读取到选中文本，但本地后端没有成功返回多模型结果。",
+              "",
+              "错误信息：",
+              error.message
+            ].join("\n")
+          }
+        ], "");
       }
     });
   }

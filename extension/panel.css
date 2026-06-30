@@ -3,7 +3,7 @@
   top: 72px;
   right: 16px;
   z-index: 2147483647;
-  width: 440px;
+  width: min(760px, calc(100vw - 32px));
   max-height: calc(100vh - 96px);
   background: #ffffff;
   border: 1px solid #d8dee4;
@@ -108,6 +108,44 @@
   padding: 12px;
 }
 
+#paper-translator-mvp-panel .pdm-config {
+  display: grid;
+  gap: 10px;
+}
+
+#paper-translator-mvp-panel .pdm-field {
+  display: grid;
+  gap: 5px;
+  color: #57606a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#paper-translator-mvp-panel .pdm-select,
+#paper-translator-mvp-panel .pdm-input,
+#paper-translator-mvp-panel .pdm-model-input {
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #24292f;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+}
+
+#paper-translator-mvp-panel .pdm-select,
+#paper-translator-mvp-panel .pdm-input {
+  min-height: 32px;
+  padding: 6px 8px;
+}
+
+#paper-translator-mvp-panel .pdm-model-input {
+  min-height: 54px;
+  resize: vertical;
+  padding: 8px;
+  line-height: 1.45;
+}
+
 #paper-translator-mvp-panel .pdm-section-title {
   margin-bottom: 8px;
   color: #24292f;
@@ -129,6 +167,7 @@
 }
 
 #paper-translator-mvp-panel .pdm-source,
+#paper-translator-mvp-panel .pdm-recommended,
 #paper-translator-mvp-panel .pdm-sci {
   min-height: 96px;
   max-height: 220px;
@@ -148,7 +187,12 @@
 
 #paper-translator-mvp-panel .pdm-compare {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+}
+
+#paper-translator-mvp-panel .pdm-compare > div {
+  min-width: 0;
 }
 
 #paper-translator-mvp-panel .pdm-mini-title {
@@ -191,6 +235,54 @@
   background: #1a7f37;
 }
 
+#paper-translator-mvp-panel .pdm-translations,
+#paper-translator-mvp-panel .pdm-reviews,
+#paper-translator-mvp-panel .pdm-candidate-scores {
+  display: grid;
+  gap: 10px;
+}
+
+#paper-translator-mvp-panel .pdm-result-card {
+  display: grid;
+  gap: 7px;
+  border: 1px solid #d8dee4;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+#paper-translator-mvp-panel .pdm-result-card-recommended {
+  border-color: #1a7f37;
+  box-shadow: inset 3px 0 0 #1a7f37;
+}
+
+#paper-translator-mvp-panel .pdm-result-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #24292f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#paper-translator-mvp-panel .pdm-badge {
+  border-radius: 999px;
+  background: #dafbe1;
+  color: #116329;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#paper-translator-mvp-panel .pdm-candidate-score {
+  border-left: 3px solid #d0d7de;
+  padding-left: 8px;
+  color: #24292f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 #paper-translator-mvp-panel .pdm-summary {
   color: #24292f;
   font-size: 12px;
@@ -217,4 +309,15 @@
   font-family: Consolas, "Courier New", monospace;
   font-size: 12px;
   line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  #paper-translator-mvp-panel {
+    width: min(520px, calc(100vw - 20px));
+    right: 10px;
+  }
+
+  #paper-translator-mvp-panel .pdm-compare {
+    grid-template-columns: 1fr;
+  }
 }
