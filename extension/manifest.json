@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Paper Debugger CN SCI",
+  "version": "0.1.0",
+  "description": "A local Overleaf assistant for translating Chinese papers into SCI-style English.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.overleaf.com/project/*", "https://overleaf.com/project/*"],
+      "js": ["content.js"],
+      "css": ["panel.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["activeTab"],
+  "host_permissions": ["http://127.0.0.1:8000/*", "http://localhost:8000/*"]
+}

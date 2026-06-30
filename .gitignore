@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local configuration
+.env
+backend/.env
+backend/prompt.txt
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+temp/
+
+# Node / extension tooling
+node_modules/
+dist/
+build/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
