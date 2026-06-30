@@ -34,6 +34,17 @@ class PromptRequest(BaseModel):
 PROMPT_PATH = Path(__file__).with_name("prompt.txt")
 
 
+OUTPUT_CONTRACT = """
+Required output format:
+Return only valid JSON with these fields:
+issues: an array of concise Chinese issue explanations,
+scores: an object with clarity, academic_tone, logic, sci_readiness, each an integer from 0 to 10,
+citation_assessment: an array of concise Chinese notes about which claims need citation or evidence,
+suggested_latex: the polished SCI English paragraph, suitable for LaTeX body text,
+summary: a concise Chinese summary of the translation and editing strategy.
+""".strip()
+
+
 DEFAULT_SYSTEM_PROMPT = """
 You are a senior SCI academic translator and editor.
 The user may provide Chinese academic manuscript text, English text, or LaTeX text.
@@ -47,19 +58,26 @@ Your task:
 5. Do not invent data, sample sizes, model names, locations, citations, metrics, conclusions,
    or experimental results that are not present in the source text.
 6. If information is missing, use cautious academic wording instead of fabrication.
-7. Return only valid JSON with these fields:
+7. Judge whether the selected claim likely needs citation support. Do not invent actual citations.
+8. Score the selected text and revised SCI English from 0 to 10.
+9. Return only valid JSON with these fields:
    issues: an array of concise Chinese issue explanations,
+   scores: an object with clarity, academic_tone, logic, sci_readiness, each an integer from 0 to 10,
+   citation_assessment: an array of concise Chinese notes about which claims need citation or evidence,
    suggested_latex: the polished SCI English paragraph, suitable for LaTeX body text,
    summary: a concise Chinese summary of the translation and editing strategy.
 """.strip()
 
 
 def get_system_prompt() -> str:
+    base_prompt = DEFAULT_SYSTEM_PROMPT
     if PROMPT_PATH.exists():
         saved_prompt = PROMPT_PATH.read_text(encoding="utf-8").strip()
         if saved_prompt:
-            return saved_prompt
-    return DEFAULT_SYSTEM_PROMPT
+            base_prompt = saved_prompt
+    if "citation_assessment" in base_prompt and "sci_readiness" in base_prompt:
+        return base_prompt
+    return f"{base_prompt}\n\n{OUTPUT_CONTRACT}"
 
 
 def extract_response_text(payload: dict) -> str:
@@ -88,6 +106,15 @@ def parse_model_json(raw_output: str, selected_text: str) -> dict:
         return {
             "issues": [
                 "The model responded, but its output was not valid JSON.",
+            ],
+            "scores": {
+                "clarity": 0,
+                "academic_tone": 0,
+                "logic": 0,
+                "sci_readiness": 0,
+            },
+            "citation_assessment": [
+                "模型返回内容不是有效 JSON，暂时无法判断引用需求。",
             ],
             "suggested_latex": selected_text,
             "summary": raw_output,
@@ -175,6 +202,15 @@ def debug_selection(request: DebugRequest):
                 "The backend is reachable, but OPENAI_API_KEY is not configured yet.",
                 "Create a backend/.env file with your OpenAI API key to enable AI analysis.",
             ],
+            "scores": {
+                "clarity": 0,
+                "academic_tone": 0,
+                "logic": 0,
+                "sci_readiness": 0,
+            },
+            "citation_assessment": [
+                "后端尚未连接模型，暂时无法判断引用需求。",
+            ],
             "suggested_latex": selected_text,
             "summary": "Backend connectivity is working. The next step is API key configuration.",
         }
@@ -185,7 +221,10 @@ def debug_selection(request: DebugRequest):
     parsed = parse_model_json(raw_output, selected_text)
 
     return {
+        "source_text": selected_text,
         "issues": parsed.get("issues", []),
+        "scores": parsed.get("scores", {}),
+        "citation_assessment": parsed.get("citation_assessment", []),
         "suggested_latex": parsed.get("suggested_latex", selected_text),
         "summary": parsed.get("summary", ""),
     }
