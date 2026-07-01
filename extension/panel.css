@@ -153,6 +153,15 @@
   font-weight: 700;
 }
 
+#paper-translator-mvp-panel .pdm-route-note {
+  border-left: 3px solid #0969da;
+  background: #ddf4ff;
+  color: #24292f;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 #paper-translator-mvp-panel .pdm-issues ol,
 #paper-translator-mvp-panel .pdm-citations ol {
   margin: 0;

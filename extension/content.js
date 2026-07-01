@@ -232,17 +232,20 @@
               <option value="custom">自定义多译多评</option>
             </select>
           </label>
+          <div class="pdm-route-note">
+            当前后端通过 CC Switch 转发；这里填写的是模型名或路由名，实际供应商由 CC Switch 当前 Codex 路由决定。
+          </div>
           <label class="pdm-field">
-            <span>翻译模型，逗号或换行分隔</span>
-            <textarea class="pdm-model-input" data-field="translator-models" spellcheck="false">gpt-5.5, gpt-5.5</textarea>
+            <span>翻译模型 / 路由名，逗号或换行分隔</span>
+            <textarea class="pdm-model-input" data-field="translator-models" spellcheck="false">deepseek-v4-pro, deepseek-v4-flash</textarea>
           </label>
           <label class="pdm-field">
-            <span>评审模型，逗号或换行分隔</span>
-            <textarea class="pdm-model-input" data-field="reviewer-models" spellcheck="false">gpt-5.5</textarea>
+            <span>评审模型 / 路由名，逗号或换行分隔</span>
+            <textarea class="pdm-model-input" data-field="reviewer-models" spellcheck="false">deepseek-v4-pro</textarea>
           </label>
           <label class="pdm-field">
-            <span>最终汇总模型，可留空</span>
-            <input class="pdm-input" data-field="final-model" value="gpt-5.5" />
+            <span>最终汇总模型 / 路由名，可留空</span>
+            <input class="pdm-input" data-field="final-model" value="deepseek-v4-pro" />
           </label>
         </section>
         <div class="pdm-actions">

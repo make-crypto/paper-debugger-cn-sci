@@ -58,7 +58,16 @@ copy .env.example .env
 ```text
 OPENAI_BASE_URL=http://127.0.0.1:15721/v1
 OPENAI_API_KEY=cc-switch
-OPENAI_MODEL=your-routed-model
+OPENAI_MODEL=deepseek-v4-pro
+```
+
+使用 CC Switch 时，面板里的模型名可以理解为“请求模型名 / 路由名”。真正调用哪家供应商由 CC Switch 当前 Codex 路由决定；如果你只给 Codex 配置了 DeepSeek，那么请求会被 CC Switch 转到 DeepSeek。
+
+当前可以先使用这些路由名：
+
+```text
+deepseek-v4-pro
+deepseek-v4-flash
 ```
 
 如果直接使用 OpenAI API，可以删除 `OPENAI_BASE_URL`，并填写真实 API key：
@@ -94,7 +103,7 @@ http://127.0.0.1:8000/health
 1. 在 Overleaf 编辑器中选中一段中文论文内容。
 2. 点击右侧面板的“翻译选中文本”。
 3. 在“协作模式”里选择单模型、双译一评或自定义多译多评。
-4. 填写翻译模型和评审模型。多个模型可以用逗号或换行分隔。
+4. 填写翻译模型 / 路由名和评审模型 / 路由名。多个模型可以用逗号或换行分隔。
 5. 查看“综合评分”“译文候选”“评审意见”“引用与证据判断”。
 6. 需要时点击“复制推荐译文”，再手动粘贴回 Overleaf。
 

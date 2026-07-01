@@ -115,7 +115,7 @@ def clean_models(models: list[str]) -> list[str]:
 
 
 def get_default_model() -> str:
-    return os.getenv("OPENAI_MODEL", "gpt-4.1")
+    return os.getenv("OPENAI_MODEL", "deepseek-v4-pro")
 
 
 def normalize_workflow(workflow: WorkflowConfig | None) -> WorkflowConfig:
